@@ -84,19 +84,19 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    // validate req
-    if (!email || !password) {
-        res.status(400);
-        throw new Error("Please add email and password");
-    }
+    // // validate req
+    // if (!email && !password) {
+    //     res.status(400);
+    //     throw new Error("Please add email and password");
+    // }
 
-    //check if user exists
-    const user = await User.findOne({ email });
+    // //check if user exists
+    // const user = await User.findOne({ email });
 
-    if (!user) {
-        res.status(400);
-        throw new Error("User not found, please signup");
-    }
+    // if (!user) {
+    //     res.status(400);
+    //     throw new Error("User not found, please signup");
+    // }
 
     // User exist, check if password is correct
     const passwordIsCorrect = await bcrypt.compare(password, user.password);
@@ -133,6 +133,11 @@ const loginUser = asyncHandler(async (req, res) => {
 });
 
 const logoutUser = asyncHandler(async (req, res) => {
+    const token = req.cookies.token;
+    if (!token) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+
     // Expire the cookie to logout
     res.cookie("token", "", {
         path: "/",
@@ -141,6 +146,7 @@ const logoutUser = asyncHandler(async (req, res) => {
         sameSite: "none",
         secure: true
     });
+    localStorage.removeItem("name");
     return res.status(200).json({ message: "Successfully Logout" });
 });
 

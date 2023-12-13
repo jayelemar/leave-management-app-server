@@ -84,19 +84,19 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
 
-    // // validate req
-    // if (!email && !password) {
-    //     res.status(400);
-    //     throw new Error("Please add email and password");
-    // }
+    // validate req
+    if (!email && !password) {
+        res.status(400);
+        throw new Error("Please add email and password");
+    }
 
-    // //check if user exists
-    // const user = await User.findOne({ email });
+    //check if user exists
+    const user = await User.findOne({ email });
 
-    // if (!user) {
-    //     res.status(400);
-    //     throw new Error("User not found, please signup");
-    // }
+    if (!user) {
+        res.status(400);
+        throw new Error("User not found, please signup");
+    }
 
     // User exist, check if password is correct
     const passwordIsCorrect = await bcrypt.compare(password, user.password);
@@ -146,27 +146,35 @@ const logoutUser = asyncHandler(async (req, res) => {
         sameSite: "none",
         secure: true
     });
-    localStorage.removeItem("name");
     return res.status(200).json({ message: "Successfully Logout" });
 });
 
 const getUser = asyncHandler(async (req, res) => {
-    const user = await User.findById(req.user._id);
-
-    if (user) {
-        const { _id, name, email, photo, phone, bio } = user;
-        res.status(200).json({
-            _id,
-            name,
-            email,
-            photo,
-            phone,
-            bio
-        });
-    } else {
+    if (!req.user || !req.user._id) {
         res.status(400);
         throw new Error("User not found.");
     }
+
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        res.status(400);
+        throw new Error("User not found.");
+    }
+
+    // Assuming you want to return user details
+    const { _id, name, email, photo, phone, bio } = user;
+
+    res.status(200).json({
+        _id,
+        name,
+        email,
+        photo,
+        phone,
+        bio
+    });
 });
 
 const loginStatus = asyncHandler(async (req, res) => {
@@ -242,19 +250,21 @@ const forgotPassword = asyncHandler(async (req, res) => {
 
     if (!user) {
         res.status(404).json({ error: "User does not exist" });
+        return;
     }
 
     // Delete Token if it exist in DB
-    let token = await Token.findOne({
-        userId: user._id
-    });
-    if (token) {
-        await token.deleteOne();
+    if (user._id) {
+        let token = await Token.findOne({
+            userId: user._id
+        });
+        if (token) {
+            await token.deleteOne();
+        }
     }
 
     // Create Reset Token
-    let resetToken = crypto.randomBytes(32).toString("hex") + user._id;
-    // console.log(resetToken);
+    let resetToken = crypto.randomBytes(32).toString("hex");
 
     // Hash token before saving to DB
     const hashedToken = crypto

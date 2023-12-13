@@ -21,10 +21,10 @@ const protect = asyncHandler(async (req, res, next) => {
         }
         req.user = user;
         next();
-    }   catch (error) {
-        res.status(401);
-        throw new Error("Not authorized, please login");
+    } catch (error) {
+        console.error("Authentication Error:", error.message);
+        res.status(401).json({ error: error.message });
     }
-})  ;
+});
 
 module.exports = protect;

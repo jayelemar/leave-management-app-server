@@ -83,7 +83,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, password } = req.body;
-
+    console.log("Received Login Request: ", { email, password });
     // validate req
     if (!email && !password) {
         res.status(400);
@@ -92,11 +92,20 @@ const loginUser = asyncHandler(async (req, res) => {
 
     //check if user exists
     const user = await User.findOne({ email });
+    console.log("Fetched User from DB:", user);
 
     if (!user) {
         res.status(400);
         throw new Error("User not found, please signup");
     }
+
+    // Log the received email and password
+    console.log("Received Email:", email);
+    console.log("Received Password:", password);
+
+    // Log the user email and hashed password from the database
+    console.log("User Email from DB:", user.email);
+    console.log("User Password from DB:", user.password);
 
     // User exist, check if password is correct
     const passwordIsCorrect = await bcrypt.compare(password, user.password);
@@ -113,20 +122,19 @@ const loginUser = asyncHandler(async (req, res) => {
             sameSite: "none",
             secure: true
         });
+        console.log("password is correct: ", password);
     }
 
     if (user && passwordIsCorrect) {
-        const { _id, name, email, photo, phone, bio } = user;
+        const { _id, name, email } = user;
         res.status(200).json({
             _id,
             name,
             email,
-            photo,
-            phone,
-            bio,
             token
         });
     } else {
+        console.log("Invalid email or password");
         res.status(400);
         throw new Error("Invalid email or password");
     }
@@ -165,15 +173,12 @@ const getUser = asyncHandler(async (req, res) => {
     }
 
     // Assuming you want to return user details
-    const { _id, name, email, photo, phone, bio } = user;
+    const { _id, name, email } = user;
 
     res.status(200).json({
         _id,
         name,
-        email,
-        photo,
-        phone,
-        bio
+        email
     });
 });
 
@@ -195,21 +200,15 @@ const updateUser = asyncHandler(async (req, res) => {
     const user = await User.findById(req.user._id);
 
     if (user) {
-        const { name, email, photo, phone, bio } = user;
+        const { name, email } = user;
 
         (user.email = email), (user.name = req.body.name || name);
-        user.phone = req.body.phone || name;
-        user.bio = req.body.bio || name;
-        user.photo = req.body.photo || name;
 
         const updatedUser = await user.save();
         res.status(200).json({
             _id: updatedUser._id,
             name: updatedUser.name,
-            email: updatedUser.email,
-            photo: updatedUser.photo,
-            phone: updatedUser.phone,
-            bio: updatedUser.bio
+            email: updatedUser.email
         });
     } else {
         res.status(404);
@@ -313,6 +312,9 @@ const resetPassword = asyncHandler(async (req, res) => {
     const { password } = req.body;
     const { resetToken } = req.params;
 
+    console.log("Received Reset Password Data:", req.body);
+    console.log("Received Reset Token:", resetToken);
+
     // Hash token, then compare to token in DB
     const hashedToken = crypto
         .createHash("sha256")
@@ -348,6 +350,10 @@ const resetPassword = asyncHandler(async (req, res) => {
         success: true,
         message: "Password reset successful"
     });
+
+    console.log("User Email from Token:", user.email);
+    console.log("Updated User Email:", user.email);
+    console.log("Updated User Password:", user.password);
 });
 
 module.exports = {

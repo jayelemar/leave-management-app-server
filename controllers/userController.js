@@ -313,9 +313,6 @@ const resetPassword = asyncHandler(async (req, res) => {
     const { password } = req.body;
     const { resetToken } = req.params;
 
-    console.log("Received Reset Password Data:", req.body);
-    console.log("Received Reset Token:", resetToken);
-
     // Hash token, then compare to token in DB
     const hashedToken = crypto
         .createHash("sha256")
@@ -368,3 +365,4 @@ module.exports = {
     forgotPassword,
     resetPassword
 };
+
